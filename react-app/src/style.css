@@ -1,0 +1,38 @@
+.input  {
+    color: #ae7000;
+}
+.show {
+  opacity: 1;
+  transition: all 1.5s ease-in
+}
+.hide {
+  opacity: 0;
+  transition: all 1.5s ease-in
+}
+/* 入场开始 xxx-enter */
+/* 入场开始后到入场结束前 xxx-enter-active */
+/* 入场结束 xxx-enter-done */
+/* 退场开始 xxx-exit */
+/* 退场开始后到退场结束前 xxx-exit-active */
+/* 退场结束 xxx-exit-done */
+.boss-test-enter {
+  opacity: 0;
+}
+.boss-test-enter-active {
+  opacity: 1;
+  transition: opacity 2s;
+}
+.boss-test-enter-done {
+  opacity: 1;
+}
+
+.boss-exit-enter {
+  opacity: 1;
+}
+.boss-test-exit-active {
+  opacity: 0;
+  transition: opacity 2s;
+}
+.boss-test-exit-done {
+  opacity: 0;
+}
