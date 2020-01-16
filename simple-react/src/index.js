@@ -20,7 +20,7 @@ function setAttribute(dom, name, value) {
       }
     }
   } else {
-    if (name in dom) {
+    if (name !== "class" && name in dom) {
       dom[name] = value || ''
     }
     if (value) {
@@ -84,12 +84,20 @@ const ReactDOM = {
     return render(vnode, container)
   }
 }
-function handleOnClick() {}
 
-const element = (
-  <div>
-    hello <span className='first-class-name  aaa' style={{'font-size': '30px'}}>world</span> patch
-  </div>
-)
+function handleOnClick() {
+  console.log('show handleOnClick console')
+}
 
-ReactDOM.render(element, document.getElementById('root'))
+function tick () {
+  const element = (
+    <div onClick={handleOnClick} kkk='123'>
+      hello <span className='first-class-name  aaa' style={{'font-size': '30px'}}>world</span> patch
+    <h2>It is {new Date().toLocaleString()}</h2>
+    </div>
+  )
+  console.log(element)
+  ReactDOM.render(element, document.getElementById('root'))
+}
+tick()
+setInterval(tick, 1000)

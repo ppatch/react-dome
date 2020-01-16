@@ -139,7 +139,7 @@ function setAttribute(dom, name, value) {
       }
     }
   } else {
-    if (name in dom) {
+    if (name !== "class" && name in dom) {
       dom[name] = value || '';
     }
 
@@ -213,15 +213,26 @@ var ReactDOM = {
   }
 };
 
-function handleOnClick() {}
+function handleOnClick() {
+  console.log('show handleOnClick console');
+}
 
-var element = React.createElement("div", null, "hello ", React.createElement("span", {
-  className: 'first-class-name  aaa',
-  style: {
-    'font-size': '30px'
-  }
-}, "world"), " patch");
-ReactDOM.render(element, document.getElementById('root'));
+function tick() {
+  var element = React.createElement("div", {
+    onClick: handleOnClick,
+    kkk: '123'
+  }, "hello ", React.createElement("span", {
+    className: 'first-class-name  aaa',
+    style: {
+      'font-size': '30px'
+    }
+  }, "world"), " patch", React.createElement("h2", null, "It is ", new Date().toLocaleString()));
+  console.log(element);
+  ReactDOM.render(element, document.getElementById('root'));
+}
+
+tick();
+setInterval(tick, 1000);
 },{}],"../../../../../usr/local/lib/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
