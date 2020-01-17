@@ -117,13 +117,20 @@ parcelRequire = (function (modules, cache, entry, globalName) {
   }
 
   return newRequire;
-})({"src/index.js":[function(require,module,exports) {
+})({"src/react-dom/dom.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.setAttribute = void 0;
+
 function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
 
 /**
 设置属性需要考虑一些特殊情况，我们单独将其拿出来作为一个方法setAttribute
  */
-function setAttribute(dom, name, value) {
+var setAttribute = function setAttribute(dom, name, value) {
   // 如果属性名是classname,则改回class
   if (name === 'className') name = 'class'; // 如果属性名是onXXX,则是一个事件监听方法
 
@@ -150,7 +157,169 @@ function setAttribute(dom, name, value) {
     }
   } // 普通属性则直接更新属性
 
+};
+
+exports.setAttribute = setAttribute;
+},{}],"src/react-dom/render.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.renderComponent = renderComponent;
+exports.render = render;
+
+var _component = _interopRequireDefault(require("../react/component"));
+
+var _dom = require("./dom");
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+// 创建组件
+function createComponent(component, props) {
+  var inst; // 如果是类定义组件，则直接返回实例
+
+  if (component.prototype && component.prototype.render) {
+    inst = new component(props); // 如果是函数定义组件，则将其扩展为类定义组件
+  } else {
+    inst = new _component.default(props);
+    inst.constructor = component;
+
+    inst.render = function () {
+      return this.constructor(props);
+    };
+  }
+
+  return inst;
 }
+
+function unmountComponent(component) {
+  if (component.componentWillUnmount) component.componentWillUnmount();
+  removeNode(component.base);
+} // 设置组件props
+
+
+function setComponentProps(component, props) {
+  if (!component.base) {
+    if (component.componentWillMount) component.componentWillMount();
+  } else if (component.componentWillReceiveProps) {
+    component.componentWillReceiveProps(props);
+  }
+
+  component.props = props;
+  renderComponent(component);
+} // 挂载/更新组件
+
+
+function renderComponent(component) {
+  var base;
+  var renderer = component.render();
+
+  if (component.base && component.componentWillUpdate) {
+    component.componentWillUpdate();
+  }
+
+  base = _render(renderer);
+
+  if (component.base) {
+    if (component.componentDidUpdate) component.componentDidUpdate();
+  } else if (component.componentDidMount) {
+    component.componentDidMount();
+  }
+
+  if (component.base && component.base.parentNode) {
+    component.base.parentNode.replaceChild(base, component.base);
+  }
+
+  component.base = base;
+  component.aaa = 111;
+  base._component = component;
+}
+
+function _render(vnode) {
+  if (vnode === undefined || vnode === null || typeof vnode === 'boolean') vnode = '';
+  if (typeof vnode === 'number') vnode = String(vnode);
+
+  if (typeof vnode === 'string') {
+    var textNode = document.createTextNode(vnode);
+    return textNode;
+  } // 渲染组件
+
+
+  if (typeof vnode.tag === 'function') {
+    var component = createComponent(vnode.tag, vnode.attrs);
+    setComponentProps(component, vnode.attrs);
+    return component.base;
+  }
+
+  var dom = document.createElement(vnode.tag);
+
+  if (vnode.attrs) {
+    Object.keys(vnode.attrs).forEach(function (key) {
+      var value = vnode.attrs[key];
+      (0, _dom.setAttribute)(dom, key, value); // 设置属性
+    });
+  }
+
+  vnode.children && vnode.children.forEach(function (child) {
+    return render(child, dom);
+  });
+  return dom;
+}
+
+function render(vnode, container) {
+  return container.appendChild(_render(vnode));
+}
+},{"../react/component":"src/react/component.js","./dom":"src/react-dom/dom.js"}],"src/react/component.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+var _render = require("../react-dom/render");
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
+var Component =
+/*#__PURE__*/
+function () {
+  function Component() {
+    var props = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+
+    _classCallCheck(this, Component);
+
+    this.isReactComponent = true;
+    this.state = {};
+    this.props = props;
+  }
+
+  _createClass(Component, [{
+    key: "setState",
+    value: function setState(stateChange) {
+      Object.assign(this.state, stateChange);
+      (0, _render.renderComponent)(this);
+    }
+  }]);
+
+  return Component;
+}();
+
+var _default = Component;
+exports.default = _default;
+},{"../react-dom/render":"src/react-dom/render.js"}],"src/react/create-element.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
 /**
   从jsx转译结果来看，createElement方法的参数是这样：
 
@@ -161,9 +330,7 @@ function setAttribute(dom, name, value) {
 
   我们对createElement的实现非常简单，只需要返回一个对象来保存它的信息就行了。
  */
-
-
-function createElement(tag, attrs) {
+var createElement = function createElement(tag, attrs) {
   for (var _len = arguments.length, children = new Array(_len > 2 ? _len - 2 : 0), _key = 2; _key < _len; _key++) {
     children[_key - 2] = arguments[_key];
   }
@@ -173,67 +340,123 @@ function createElement(tag, attrs) {
     attrs: attrs,
     children: children
   };
-}
-/**
-  所以render的第一个参数实际上接受的是createElement返回的对象，也就是虚拟DOM
-  而第二个参数则是挂载的目标DOM
-
-  总而言之，render方法的作用就是将虚拟DOM渲染成真实的DOM，下面是它的实现： 
-*/
-
-
-function _render(vnode, container) {
-  if (typeof vnode === 'string') {
-    var textNode = document.createTextNode(vnode);
-    return container.appendChild(textNode);
-  }
-
-  var dom = document.createElement(vnode.tag);
-
-  if (vnode.attrs) {
-    Object.keys(vnode.attrs).forEach(function (key) {
-      var value = vnode.attrs[key];
-      setAttribute(dom, key, value); // 设置属性
-    });
-  }
-
-  vnode.children.forEach(function (child) {
-    return _render(child, dom);
-  });
-  return container.appendChild(dom);
-}
-
-var React = {
-  createElement: createElement
 };
+
+var _default = createElement;
+exports.default = _default;
+},{}],"src/react/index.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+var _component = _interopRequireDefault(require("./component.js"));
+
+var _createElement = _interopRequireDefault(require("./create-element.js"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+var _default = {
+  Component: _component.default,
+  createElement: _createElement.default
+};
+exports.default = _default;
+},{"./component.js":"src/react/component.js","./create-element.js":"src/react/create-element.js"}],"src/react-dom/index.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+var _render = require("./render");
+
 var ReactDOM = {
-  render: function render(vnode, container) {
-    container.innerHTML = '';
-    return _render(vnode, container);
-  }
+  render: _render.render,
+  renderComponent: _render.renderComponent
 };
+var _default = ReactDOM;
+exports.default = _default;
+},{"./render":"src/react-dom/render.js"}],"src/index.js":[function(require,module,exports) {
+"use strict";
+
+var _react = _interopRequireDefault(require("./react"));
+
+var _reactDom = _interopRequireDefault(require("./react-dom"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
+function _possibleConstructorReturn(self, call) { if (call && (_typeof(call) === "object" || typeof call === "function")) { return call; } return _assertThisInitialized(self); }
+
+function _assertThisInitialized(self) { if (self === void 0) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return self; }
+
+function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) { return o.__proto__ || Object.getPrototypeOf(o); }; return _getPrototypeOf(o); }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); if (superClass) _setPrototypeOf(subClass, superClass); }
+
+function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
+
+var Counter =
+/*#__PURE__*/
+function (_React$Component) {
+  _inherits(Counter, _React$Component);
+
+  function Counter(props) {
+    var _this;
+
+    _classCallCheck(this, Counter);
+
+    _this = _possibleConstructorReturn(this, _getPrototypeOf(Counter).call(this, props));
+    _this.state = {
+      num: 1
+    };
+    return _this;
+  }
+
+  _createClass(Counter, [{
+    key: "onClick",
+    value: function onClick() {
+      this.setState({
+        num: this.state.num + 1
+      });
+    }
+  }, {
+    key: "render",
+    value: function render() {
+      var _this2 = this;
+
+      return _react.default.createElement("div", {
+        onClick: this.props.onClick
+      }, "hello, ", this.props.name, _react.default.createElement("h1", null, "count: ", this.state.num), _react.default.createElement("button", {
+        onClick: function onClick() {
+          return _this2.onClick();
+        }
+      }, "add"));
+    }
+  }]);
+
+  return Counter;
+}(_react.default.Component);
 
 function handleOnClick() {
-  console.log('show handleOnClick console');
+  console.log('onClick');
 }
 
-function tick() {
-  var element = React.createElement("div", {
-    onClick: handleOnClick,
-    kkk: '123'
-  }, "hello ", React.createElement("span", {
-    className: 'first-class-name  aaa',
-    style: {
-      'font-size': '30px'
-    }
-  }, "world"), " patch", React.createElement("h2", null, "It is ", new Date().toLocaleString()));
-  console.log(element);
-  ReactDOM.render(element, document.getElementById('root'));
-}
-
-tick();
-setInterval(tick, 1000);
-},{}],"../../../../../usr/local/lib/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
+_reactDom.default.render(_react.default.createElement(Counter, {
+  name: 'kkk',
+  onClick: handleOnClick
+}), document.getElementById('root'));
+},{"./react":"src/react/index.js","./react-dom":"src/react-dom/index.js"}],"../../../../../usr/local/lib/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
 var OldModule = module.bundle.Module;
@@ -261,7 +484,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "64650" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "51703" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
