@@ -1,8 +1,7 @@
-import { render, renderComponent } from './render'
+import render from './render'
 
 const ReactDOM = {
-  render,
-  renderComponent
+  render
 }
 
 export default ReactDOM;

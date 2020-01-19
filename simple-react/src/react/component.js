@@ -1,4 +1,5 @@
-import { renderComponent } from '../react-dom/render'
+
+import { renderComponent } from '../react-dom/diff'
 
 class Component {
   constructor(props = {}) {
@@ -13,4 +14,5 @@ class Component {
     renderComponent(this);
   }
 }
+
 export default Component;

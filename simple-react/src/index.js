@@ -16,17 +16,50 @@ class Counter extends React.Component {
   render() {
     return (
       <div onClick={this.props.onClick}>
-        hello, {this.props.name}
         <h1>count: {this.state.num}</h1>
         <button onClick={() => this.onClick()}>add</button>
       </div>
     );
   }
 }
+class Hello extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      name: 'patch'
+    }
+  }
 
-function handleOnClick() { console.log('onClick')}
+  render() {
+    const { name } = this.state
+
+    return (
+      <div>
+        hello, {name}
+      </div>
+    )
+  }
+}
+
+class App extends React.Component {
+  constructor(props) {
+    super(props)
+    this.state = {
+    }
+  }
+
+  render() {
+    const tree = (
+      <div>
+        <div>hello, {this.props.name}</div>
+         <Counter />
+      </div>
+    )
+    return tree
+  }
+}
 
 ReactDOM.render(
-  <Counter name='kkk' onClick={handleOnClick}/>,
+  <App name='patch'/>,
   document.getElementById('root')
 );
