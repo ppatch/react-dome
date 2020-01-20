@@ -10,7 +10,15 @@ class Counter extends React.Component {
   }
 
   onClick() {
-    this.setState({ num: this.state.num + 1 });
+    for(let i = 0; i < 10; i++) {
+      this.setState(prveState => {
+        console.log(prveState)
+        return {
+          num: prveState.num + 1
+        }
+      });
+      console.log(this.state.num)
+    }
   }
 
   render() {

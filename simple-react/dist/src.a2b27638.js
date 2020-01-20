@@ -473,13 +473,66 @@ function () {
   _createClass(Component, [{
     key: "setState",
     value: function setState(stateChange) {
-      Object.assign(this.state, stateChange);
-      (0, _diff.renderComponent)(this);
+      enqueueSetState(stateChange, this); // Object.assign(this.state, stateChange);
+      // renderComponent(this);
     }
   }]);
 
   return Component;
 }();
+
+var queue = [];
+var renderQueue = [];
+
+function enqueueSetState(stateChange, component) {
+  if (queue.length === 0) {
+    defer(flush);
+  }
+
+  queue.push({
+    stateChange: stateChange,
+    component: component
+  }); // 如果renderQueue里没有当前组件，则添加到队列中
+
+  if (!renderQueue.some(function (item) {
+    return item === component;
+  })) {
+    renderQueue.push(component);
+  }
+}
+
+function defer(fn) {
+  return Promise.resolve().then(fn);
+}
+
+function flush() {
+  var item;
+  var component;
+
+  while (item = queue.shift()) {
+    var _item = item,
+        stateChange = _item.stateChange,
+        _component = _item.component;
+
+    if (!_component.prevState) {
+      _component.prevState = Object.assign({}, _component.state);
+    }
+
+    ;
+
+    if (typeof stateChange === 'function') {
+      Object.assign(_component.state, stateChange(_component.prevState, _component.props));
+    } else {
+      Object.assign(_component.state, stateChange);
+    }
+
+    _component.prevState = _component.state;
+  }
+
+  while (component = renderQueue.shift()) {
+    (0, _diff.renderComponent)(component);
+  }
+}
 
 var _default = Component;
 exports.default = _default;
@@ -659,9 +712,15 @@ function (_React$Component) {
   _createClass(Counter, [{
     key: "onClick",
     value: function onClick() {
-      this.setState({
-        num: this.state.num + 1
-      });
+      for (var i = 0; i < 10; i++) {
+        this.setState(function (prveState) {
+          console.log(prveState);
+          return {
+            num: prveState.num + 1
+          };
+        });
+        console.log(this.state.num);
+      }
     }
   }, {
     key: "render",
